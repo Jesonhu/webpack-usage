@@ -12,7 +12,7 @@ const path = require('path');
 // 把less css scss文件分离：要使用mini-css-extract-plugin插件
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebPackPlugin = require("html-webpack-plugin");
-const OptimizeCss = require('optimize-css-assets-webpack-plugin')
+const OptimizeCss = require('optimize-css-assets-webpack-plugin');
 
 module.exports = {
   mode: 'development',
@@ -32,9 +32,11 @@ module.exports = {
       template: "./src/index.html",
       filename: "./index.html"
     }),
-    new OptimizeCss(),
+    new OptimizeCss({
+      cssProcessor: require('cssnano')
+    }),
     new MiniCssExtractPlugin({
-      path: path.resolve(__dirname, 'dist/style'),
+      path: path.resolve(__dirname, 'dist'),
       // filename: "[name].[chunkhash:8].css",
       filename: "main.css",
       chunkFilename: "[id].css"
@@ -70,7 +72,18 @@ module.exports = {
           //   }
           // },
           {
-            loader: 'css-loader'
+            loader: 'css-loader',
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              plugins: [
+                // Notice: 这里要添加`{browsers:['last 2 versions']}`
+                // 不添加不会添加前缀
+                require('autoprefixer')({browsers:['last 2 versions']})
+              ]
+            }
           }
         ]
       },
@@ -86,7 +99,16 @@ module.exports = {
             }
           },
           // "style-loader",
-          "css-loader",
+          {loader: 'css-loader',options: {importLoaders: 2}},  //2代表css-loader后还需要几个loader
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              plugins: [
+                require('autoprefixer')({browsers:['last 2 versions']})
+              ]
+            }
+          },
           'sass-loader'
         ]
       }
