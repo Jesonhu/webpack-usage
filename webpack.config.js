@@ -12,6 +12,7 @@ const path = require('path');
 // 把less css scss文件分离：要使用mini-css-extract-plugin插件
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebPackPlugin = require("html-webpack-plugin");
+const OptimizeCss = require('optimize-css-assets-webpack-plugin')
 
 module.exports = {
   mode: 'development',
@@ -31,6 +32,7 @@ module.exports = {
       template: "./src/index.html",
       filename: "./index.html"
     }),
+    new OptimizeCss(),
     new MiniCssExtractPlugin({
       path: path.resolve(__dirname, 'dist/style'),
       // filename: "[name].[chunkhash:8].css",
