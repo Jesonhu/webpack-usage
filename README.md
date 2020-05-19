@@ -12,6 +12,29 @@
 npm run dev
 ```
 
+## 案例目录规划
+
++ 单入口文件
++ 多入口文件
++ Babel-loader 使用
++ CSS-loader 使用
++ Image loader 使用
++ CSS Module
++ less loader
++ scss loader
++ less scss loader
++ typescript 支持
++ UglifyJs 插件
++ Html 插件
++ Html 插件与浏览器打开插件
++ 环境变量
++ 代码分割
++ 代码分割与 bundle-loader
++ 公共 chunk
++ 第三方库分割
++ 导出全局变量
+
+
 
 ### 参考资料
 + [Webpack英文官网](https://webpack.js.org/concepts/)
@@ -23,3 +46,4 @@ npm run dev
 + [webpack4使用optimize-css-assets-webpack-plugin压缩单独的css文件](https://blog.csdn.net/weixin_36185028/article/details/82182352)
 + [webpack进阶之插件篇](https://www.cnblogs.com/grimm/p/5772444.html)
 + [PostCSS及其常用插件介绍--cssnano](http://www.css88.com/archives/7317)
++ [webpack-demos by ruanyf](https://github.com/ruanyf/webpack-demos)
