@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="./assets/libs/docsify/themes/vue.css">
+  <style>
+    /* ========== 分页样式修改 ========== */
+    .docsify-pagination-container { font-size: 12px; }
+    /* ========== 预览图样式 ========== */
+    .preview_imgs {
+      width: 200px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="./assets/libs/docsify/vue.js"></script>
+  <script src="./assets/libs/docsify/babel.min.js"></script>
+  <script>
+    const docsConfig = {
+      // 在线文档页面标题
+      title: 'Webpack 使用案例',
+      // 文档源码库
+      repo: 'https://gitee.com/weblife/yt-doc',
+      // 文档源码根地址
+      docBasePath: 'https://gitee.com/weblife/yt-doc/tree/master/'
+    }
+    document.title = docsConfig.title;
+    
+    window.$docsify = {
+      name: docsConfig.title,
+      // 用于开启右上角 github 图标
+      repo: docsConfig.repo,
+      auto2top: true,
+      loadSidebar: true,
+      alias: {
+        // 左边: 根据目录结构调整 右边: 根据目录文件名调整.
+        '/.*/_sidebar.md': '/_sidebar.md'
+      },
+
+      formatUpdated: '{MM}/{DD} {HH}:{mm}',
+
+      maxLevel: 4,
+      subMaxLevel: 4,
+
+      // 搜索相关
+      search: {
+        noData: {
+          '/': '没有结果!'
+        },
+        paths: 'auto',
+        placeholder: '搜一下...'
+      },
+
+      // 代码复制.
+      copyCode: {
+        buttonText : '复制代码',
+        errorText  : '复制失败',
+        successText: '复制成功'
+      },
+      plugins: [
+        function (hook, vm) {
+          hook.beforeEach(function (html) {
+            if (/githubusercontent\.com/.test(vm.route.file)) {
+              url = vm.route.file
+                .replace('raw.githubusercontent.com', 'github.com')
+                .replace(/\/master/, '/blob/master')
+            } else {
+              url = docsConfig.docBasePath + vm.route.file
+            }
+            var editHtml = '[:memo: 编辑文档](' + url + ')\n'
+            return editHtml
+              + html
+              + '\n\n----\n\n'
+              + '<a href="https://docsify.js.org" target="_blank" style="color: inherit; font-weight: normal; text-decoration: none; text-align: center;">Powered by docsify</a>'
+          })
+        },
+      ]
+    }
+  </script>
+  <script src="./assets/libs/docsify/docsify.min.js"></script>
+  <script src="./assets/libs/docsify/plugins/search.js"></script>
+  <script src="./assets/libs/docsify/plugins/emoji.js"></script>
+  <script src="./assets/libs/docsify/docsify-edit-on-github.js"></script>
+  <script src="./assets/libs/docsify/plugins/zoom-image.js"></script>
+  <script src="./assets/libs/docsify/docsify-copy-code.min.js"></script>
+  <!-- 分页 -->
+  <script src="./assets/libs/docsify/docsify-pagination.min.js"></script>
+  <script src="./assets/libs/docsify/plugins/external-script.js"></script>
+  <!-- 百度统计 -->
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?2ce307916980b07a01283a4d4b969e2a";
+      var s = document.getElementsByTagName("script")[0]; 
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+  <!-- markrun
+    @see https://github.com/markrun/markrun-docsify/blob/master/docs/index.html
+   -->
+  <!-- <script src="//unpkg.com/markrun@0.3.0/browser/markrun.js" ></script> -->
+</body>
+</html>
