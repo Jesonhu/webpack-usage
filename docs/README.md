@@ -17,13 +17,13 @@ webpack -p
 
 修改了 `webpack.config.js` 配置文件，需要重启服务才能看到效果
 
-## Demo-01: 基本入口文件
+## demo-01: 基本入口文件
 
 > 案例对应的 webpack 版本为 `v4.44.2`
 
 `webpack.config.js` 中是最基础的设置，只设置了 `entry` 与 `output.filename`
 
-## Demo-02: 修改目录结构
+## demo-02: 修改目录结构
 
 > 案例对应的 webpack 版本为 `v4.44.2`
 
@@ -40,7 +40,7 @@ module.exports = {
 }
 ```
 
-## Demo-03: 修改 devServer
+## demo-03: 修改 devServer
 
 > 案例对应的 webpack 版本为 `v4.44.2`
 
@@ -99,7 +99,7 @@ devServer: {
 默认是 `devServer` 打开的host在 `localhost`。这样局域网中的其他设备就无法访问。改成上面的配置，只要在一个局域网中的设备都能访问。
 
 
-## Demo-04: 多入口文件.
+## demo-04: 多入口文件.
 
 ```js
 // webpack.config.js
@@ -191,8 +191,191 @@ import 'babel-polyfill'
 + [webpack4系列教程（七）：使用 babel-loader](https://www.jianshu.com/p/d971bffff546): 介绍 webpack 如何使用  
 `babel-loader`。懒加载 `.babelrc` 设置.
 
+## demo-06: CSS-loader 基本用法
 
+通过 Webpack 我们可以在JS中使用CSS。一般通过 CSS-loader 处理 CSS 文件。
+
+一般需要安装两个loader:
+
++ style-loader: 将 JS 字符串生成为 style 节点
++ css-loader: 将 CSS 转化成 CommonJS 模块.
+
+```cmd
+npm i css-loader style-loader -D
+```
+
+webpack.config.js
+
+```js
+const path = require('path')
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  module: {
+    rules:[
+      {
+        test: /\.css$/,
+        use: [ 'style-loader', 'css-loader' ]
+      },
+    ]
+  }
+}
+```
+
+仅使用 css-loader 与 style-loader 。`npm run build` 后的 css 定义将放在 `output` 文件中。并在 HTML 中插入 `<style>` 及样式.
+
+## demo-07: less-loader 基本用法
+
+css 预处理器 `less` `scss` `stylus` 在项目开发中比较常见。当前介绍 `less` 的使用。主要通过 [less-loader](https://www.webpackjs.com/loaders/less-loader/) 处理 `less`
+
+```cmd
+npm i less less-loader -D
+```
+
+webpack.config.js
+
+```js
+const path = require('path')
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  module: {
+    rules:[
+      {
+        test: /\.less$/,
+        use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          {
+            loader: 'less-loader'
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+处理过程 css 类似。只是多了一步 `.less` 编译为 `.css` 文件
+
+## demo-08: sass-loader 基本用法
+
+相关依赖
+
+```cmd
+npm install sass-loader node-sass webpack --save-dev
+```
+
+注意: 不需要安装 `sass`
+
+webpack.config.js
+
+```js
+const path = require('path')
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  module: {
+    rules:[
+      {
+        test: /\.scss$/,
+        use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          {
+            loader: 'sass-loader'
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## demo-09: stylus-loader 基本用法
+
+需要依赖
+
+```cmd
+npm i stylus stylus-loader -D
+```
+
+webpack.config.js
+
+```js
+const path = require('path')
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  module: {
+    rules:[
+      {
+        test: /\.styl$/,
+        use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          {
+            loader: 'stylus-loader'
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Todo
+
++ js: 分包，压缩，混淆
++ css: 拆分，压缩
++ 图片: 小图标 base64
 
 ## 参考文档
 
-+ [ruanyf/webpack-demos](https://github.com/ruanyf/webpack-demos): 有很多案例可以查看.
++ [ruanyf/webpack-demos](https://github.com/ruanyf/webpack-demos): 有很多案例可以查看
++ [less-loader-docs](https://www.webpackjs.com/loaders/less-loader/): webpack官方 less-loader 使用文档
++ [sass-loader-docs](https://www.webpackjs.com/loaders/sass-loader/):  webpack官方 sass-loader 使用文档
++ [stylus-loader-docs](https://webpack.js.org/loaders/stylus-loader/): webpack官方 stylus-loader 使用文档

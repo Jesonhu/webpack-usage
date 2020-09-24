@@ -1,7 +1,7 @@
 import module1 from './module1'
 import module2 from './module2'
 import module3 from './module3'
-import './assets/css/stylus/index.styl'
+import './assets/css/less/index.less'
 
 function showModuleHello(moduleArr) {
   moduleArr.forEach(i => {
