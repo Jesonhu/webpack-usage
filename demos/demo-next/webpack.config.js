@@ -3,7 +3,11 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const isDevMode = process.env.NODE_ENV !== 'production'
 
-const outFilePublicPath = !isDevMode ? 'assets/imgs/' : ''
+// 绝对路径
+// const outFilePublicPath = !isDevMode ? '/assets/imgs/' : ''
+
+// 相对路径
+const outFilePublicPath = !isDevMode ? '../img/' : ''
 
 // 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
 const cssUseConfig = () => {
@@ -15,7 +19,8 @@ const cssUseConfig = () => {
     return {
       loader: MiniCssExtractPlugin.loader,
       options: {
-        publicPath: './dist'
+        publicPath: '',
+        outputPath: 'assets/css/'
       }
     }
   }
@@ -68,8 +73,9 @@ module.exports = {
             loader: 'url-loader',
             options: {
               limit: 8192,
-              name: 'assets/imgs/[name].[hash:7].[ext]',
-              publicPath: outFilePublicPath
+              name: '[name].[hash:7].[ext]',
+              publicPath: outFilePublicPath,
+              outputPath: 'assets/img/'
             }
           },
         ],

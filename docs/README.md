@@ -713,6 +713,9 @@ build 后 `./dist/assets/css` 中将生成两个css文件 `main.css` 和 `公共
 + js: 分包，压缩，混淆
 + css: 拆分，压缩
 + 图片: 小图标 base64
+  + HTML 中使用图片
+  + JS 中使用图片
+  + CSS 中使用图片
 + webpack.config.js 拆分
 
 ```js
