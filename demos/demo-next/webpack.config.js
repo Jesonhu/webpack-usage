@@ -16,14 +16,12 @@ module.exports = {
   module: {
     rules:[
       {
-        test: /\.styl$/,
+        test: /\.(png|jpg|gif)$/i,
         use: [
-          { loader: 'style-loader' },
-          { loader: 'css-loader' },
           {
-            loader: 'stylus-loader'
-          }
-        ]
+            loader: 'url-loader',
+          },
+        ],
       }
     ]
   }

@@ -1,7 +1,8 @@
 import module1 from './module1'
 import module2 from './module2'
 import module3 from './module3'
-import './assets/css/stylus/index.styl'
+import img1File from './assets/imgs/small.png';
+import img2File from './assets/imgs/big.jpg';
 
 function showModuleHello(moduleArr) {
   moduleArr.forEach(i => {
@@ -17,3 +18,13 @@ const moduleArr = [
   module3
 ]
 showModuleHello(moduleArr)
+
+// ========================================
+// image Test
+// ========================================
+const oImg1 = document.createElement('img')
+oImg1.src = img1File
+const oImg2 = document.createElement('img')
+oImg2.src = img2File
+document.body.appendChild(oImg1)
+document.body.appendChild(oImg2)

@@ -367,6 +367,79 @@ module.exports = {
 }
 ```
 
+## demo-10: url-loader 用法
+
+url-loader 主要用来处理图片，依赖如下
+
+```cmd
+npm i url-loader -D
+```
+
+webpack.config.js
+```js
+const path = require('path')
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  module: {
+    rules:[
+      {
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+          },
+        ],
+      }
+    ]
+  }
+}
+```
+
+entry
+
+```js
+import img1File from './assets/imgs/small.png';
+import img2File from './assets/imgs/big.jpg';
+
+const oImg1 = document.createElement('img')
+oImg1.src = img1File
+const oImg2 = document.createElement('img')
+oImg2.src = img2File
+document.body.appendChild(oImg1)
+document.body.appendChild(oImg2)
+```
+
+如果配置了 options.limit 还需要 `file-loader`
+```js
+module: {
+  rules:[
+    {
+      test: /\.(png|jpg|gif)$/i,
+      use: [
+        {
+          loader: 'url-loader',
+          options: {
+            limit: 8192,
+          },
+        },
+      ],
+    }
+  ]
+}
+```
+
 ## Todo
 
 + js: 分包，压缩，混淆
@@ -379,3 +452,4 @@ module.exports = {
 + [less-loader-docs](https://www.webpackjs.com/loaders/less-loader/): webpack官方 less-loader 使用文档
 + [sass-loader-docs](https://www.webpackjs.com/loaders/sass-loader/):  webpack官方 sass-loader 使用文档
 + [stylus-loader-docs](https://webpack.js.org/loaders/stylus-loader/): webpack官方 stylus-loader 使用文档
++ [url-loader-docs](https://webpack.js.org/loaders/url-loader/): webpack官方 url-loader 使用文档
