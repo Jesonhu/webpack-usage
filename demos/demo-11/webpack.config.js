@@ -3,7 +3,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const isDevMode = process.env.NODE_ENV !== 'production'
 
-const outFilePublicPath = !isDevMode ? 'assets/imgs/' : ''
+const outFilePublicPath = !isDevMode ? './dist' : ''
 
 // 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
 const cssUseConfig = () => {

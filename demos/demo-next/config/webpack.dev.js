@@ -3,30 +3,14 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const isDevMode = process.env.NODE_ENV !== 'production'
 
-const outFilePublicPath = !isDevMode ? 'assets/imgs/' : ''
-
-// 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
-const cssUseConfig = () => {
-  if (isDevMode) {
-    return {
-      loader: 'style-loader'
-    }
-  } else {
-    return {
-      loader: MiniCssExtractPlugin.loader,
-      options: {
-        publicPath: './dist'
-      }
-    }
-  }
-}
+const outFilePublicPath = !isDevMode ? './dist' : ''
 
 module.exports = {
   entry: {
     main: './src/index.js',
   },
   output: {
-    filename: '[name].js',
+    filename: 'main.js',
     path: path.resolve(__dirname, 'dist')
   },
   devServer: {
@@ -40,24 +24,14 @@ module.exports = {
       chunkFilename: isDevMode ? 'assets/css/[id].css' : 'assets/css/[id].[hash:7].css',
     })
   ],
-  optimization: {
-    splitChunks: {
-      cacheGroups: {
-        commons: {
-          name: 'common',    //提取出来的文件命名
-          chunks: 'initial',  //initial表示提取入口文件的公共部分
-          minChunks: 2,       //表示提取公共部分最少的文件数
-          minSize: 0          //表示提取公共部分最小的大小
-        }
-      }
-    },
-  },
   module: {
     rules:[
       {
         test: /\.css$/,
         use: [
-          cssUseConfig(),
+          {
+            loader: 'style-loader'
+          },
           { loader: 'css-loader' }
         ]
       },

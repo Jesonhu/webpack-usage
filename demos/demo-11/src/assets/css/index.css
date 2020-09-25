@@ -1,0 +1,10 @@
+h2 {
+  color: red;
+  font-size: 20px;
+}
+
+.small_img_wrap {
+  width: 30px;
+  height: 30px;
+  background-repeat: no-repeat;
+}

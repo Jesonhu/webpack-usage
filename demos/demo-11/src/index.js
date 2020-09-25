@@ -5,6 +5,7 @@ import img1File from './assets/imgs/small.png';
 import img2File from './assets/imgs/big.jpg';
 import './assets/css/common.css'
 import './assets/css/index.css'
+import './style.css'
 
 function showModuleHello(moduleArr) {
   moduleArr.forEach(i => {
@@ -30,16 +31,3 @@ const oImg2 = document.createElement('img')
 oImg2.src = img2File
 document.body.appendChild(oImg1)
 document.body.appendChild(oImg2)
-
-// ========================================
-// css 中图片使用
-// ========================================
-const oSmallBgWrap = document.createElement('div')
-oSmallBgWrap.className = 'small_img_wrap'
-document.body.appendChild(oSmallBgWrap)
-
-const oBigBgWrap = document.createElement('div')
-oBigBgWrap.className = 'big_img_wrap'
-document.body.appendChild(oBigBgWrap)
-
-

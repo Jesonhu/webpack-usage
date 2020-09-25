@@ -186,11 +186,6 @@ npm install --save-dev babel-polyfill
 import 'babel-polyfill'
 ```
 
-**参考文档**
-
-+ [webpack4系列教程（七）：使用 babel-loader](https://www.jianshu.com/p/d971bffff546): 介绍 webpack 如何使用  
-`babel-loader`。懒加载 `.babelrc` 设置.
-
 ## demo-06: CSS-loader 基本用法
 
 通过 Webpack 我们可以在JS中使用CSS。一般通过 CSS-loader 处理 CSS 文件。
@@ -421,7 +416,12 @@ document.body.appendChild(oImg1)
 document.body.appendChild(oImg2)
 ```
 
-如果配置了 options.limit 还需要 `file-loader`
+图片会被转换为 `base64` 格式方式在页面中使用.
+
+处理css中的图片资源时，我们常用的两种loader是file-loader或者url-loader，两者的主要差异在于。url-loader可以设置图片大小限制，当图片超过限制时，其表现行为等同于file-loader，而当图片不超过限制时，则会将图片以base64的形式打包进css文件，以减少请求次数。
+
+如果配置了 options.limit 如果图片超过了限制表现行为就等同于 file-loader. 这时我们就需要安装 `file-loader` 依赖到开发环境中。
+
 ```js
 module: {
   rules:[
@@ -440,16 +440,307 @@ module: {
 }
 ```
 
+*limit: 10,限制 图片大小 10B，小于限制会将图片转换为 base64格式*
+
+我们知道当使用 `url-loader` 且为设置 `limit` 时会将所有的图片都打包为 `base64` 格式。这种方式开发模式和生产模式都是没有问题的。因为图片已经被转换为了 `base64` 的字符串放在了 output 的 js 文件中。
+
+由于 `base64` 存在利弊，在实际开发中往往设置 `limt`。这样超出尺寸的图片将会通过路径的方式使用源图。例如如下 webpack.config.js 配置:
+
+```js
+module: {
+  rules:[
+    {
+      test: /\.(png|jpg|gif)$/i,
+      use: [
+        {
+          loader: 'url-loader',
+          options: {
+            limit: 8192,
+          },
+        },
+      ],
+    }
+  ]
+}
+```
+
+示例中的 `big.jpg` 将会通过地址方式引入。在 `num run build` 运行是发现这张图片地址引入错误的问题。
+
+![](./assets/img/file-loader-01.png)
+
+下面来解决这个问题。回顾图片引入的方式:
+
+```js
+import img1File from './assets/imgs/small.png';
+```
+所以理想的方式是在 `dist` 目录下生成 `/dist/assets/imgs` 目录。并将图片拷贝过去。下面我们朝着这个方向修改。
+
++ **添加 name**
+
+webpack.config.js
+```js
+const path = require('path')
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  module: {
+    rules:[
+      {
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192,
+              name: 'assets/imgs/[name].[hash:7].[ext]'
+            }
+          },
+        ],
+      }
+    ]
+  }
+}
+```
+
+index.js
+
+```js
+import img1File from './assets/imgs/small.png';
+import img2File from './assets/imgs/big.jpg';
+```
+下面来看看 `build` 后的结果:
+![](./assets/img/url-loader-0202.jpg)
+![](./assets/img/url-loader-0201.jpg)
+
+生产环境中依旧报错, 来分析下报错的原因: `index.html` 位于根目录。访问 `/dist` 目录下面的资源都必须带上 `./dist` 或者 `/dist`, 缺少了这个域所以报错了。
+
+配置文件复制图片是相对于 webpack 出口路径的。已将出口路径配置为 `/dist/main.js` 。而 index.html 却不在 `/dist` 中。解决这个问题有两个方向:
+
++ 方案1: `index.html` 移动到 `/dist` 中。这个在后续的 loader 中可以实现。
++ 方案2: 不移动 `index.html` 位置。配置 `publicPath`
+
+webpack.config.js
+
+```js
+const path = require('path')
+
+const outFilePublicPath = typeof process.env.NODE_ENV !== 'undefined' && process.env.NODE_ENV === "production" 
+  ? './dist'
+  : ''
+  
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  module: {
+    rules:[
+      {
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192,
+              name: 'assets/imgs/[name].[hash:7].[ext]',
+              publicPath: outFilePublicPath
+            }
+          },
+        ],
+      }
+    ]
+  }
+}
+```
+`index.html` 放在根目录。`build` 后图片资源也正常了。这里有一个 `process.env` 的坑，通过 `cross-env` 解决的。
+
+
+
+
+## demo-11: 拆分 css
+
+当前 css 也是放在 js 文件中。有时需要单独拆分到 css 文件。目前可以通过 [extract-loader](https://www.webpackjs.com/loaders/extract-loader/) 或 ~~[extract-text-webpack-plugin](https://www.webpackjs.com/plugins/extract-text-webpack-plugin/)~~ [mini-css-extract-plugin](https://www.npmjs.com/package/mini-css-extract-plugin) 实现。本示例使用 `mini-css-extract-plugin`。目前只有在webpack V4版本才支持使用该插件
+
+这个插件应该只在生产环境构建中使用，并且在loader链中不应该有style-loader，特别是我们在开发模式中使用HMR时。 所以开发环境 `style-loader` 生产环境: `mini-css-extract-plugin`
+
+**mini-css-extract-plugin 基本使用**
+
+webpack.config.js
+```js
+const path = require('path')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
+const isDevMode = process.env.NODE_ENV !== 'production'
+
+const outFilePublicPath = !isDevMode ? './dist' : ''
+
+// 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
+const cssUseConfig = () => {
+  if (isDevMode) {
+    return {
+      loader: 'style-loader'
+    }
+  } else {
+    return {
+      loader: MiniCssExtractPlugin.loader,
+      options: {
+        publicPath: './dist'
+      }
+    }
+  }
+}
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: isDevMode ? 'assets/css/[name].css' : 'assets/css/[name].[hash:7].css',
+      chunkFilename: isDevMode ? '[id].css' : '[id].[hash:7].css',
+    })
+  ],
+  module: {
+    rules:[
+      {
+        test: /\.css$/,
+        use: [
+          cssUseConfig(),
+          { loader: 'css-loader' }
+        ]
+      }
+    ]
+  }
+}
+```
+当前配置实现了:
+
++ 开发环境使用 style-loader
++ 生产环境使用 `MiniCssExtractPlugin`。
++ 自定义编译后的 `css` 位置。是通过 实例化 `new MiniCssExtractPlugin` 时。设置 `filename` 实现的。
+
+
+src/index.js
+
+```js
+import './assets/css/index.css'
+import './style.css'
+```
+
+当前配置 build 后的 `./dist/assets/css/main.*.css` 中将包含所有使用的样式.
+
+**提取公共部分 CSS: optimization**
+
+what？
+当我们在编写多入口文件的项目时，难免在不同的入口文件会有相同的部分（比如说存在部分相同的样式，使用了相同的组件，使用了公共样式等等），因此我们需要在打包过程中提取公共的部分并独立开来。
+在之前版本的webpack中，我们可以使用CommonsChunkPlugin 进行提取，而在webpack4+版本，CommonsChunkPlugin 已经从 webpack v4 legato 中移除，webpack 4+ 版本使用内置的 SplitChunksPlugin 插件来进行公共部分的提取
+
+use？
+因为 SplitChunksPlugin 是 webpack 4+ 版本内置的插件, 所以无需安装, 只需在 webpack.config.js 中配置：
+
+```js
+entry: {
+  main: './src/index.js',
+  vendor2: './src/index2.js',
+  vendor3: './src/index3.js',
+},
+output: {
+  filename: '[name].js',
+  path: path.resolve(__dirname, 'dist')
+},
+optimization: {
+  splitChunks: {
+    cacheGroups: {
+      commons: {
+        name: 'common',    //提取出来的文件命名
+        chunks: 'initial',  //initial表示提取入口文件的公共部分
+        minChunks: 2,       //表示提取公共部分最少的文件数
+        minSize: 0          //表示提取公共部分最小的大小
+      }
+    }
+  },
+}
+```
+
+index2.js
+
+```js
+import './assets/css/common.css'
+```
+
+index3.js
+
+```js
+import './assets/css/common.css'
+```
+
+build 后 `./dist/assets/css` 中将生成两个css文件 `main.css` 和 `公共样式文件`
+
+## demo-12: url-loader && css
+
+前面处理了 js 中 图片的使用。下面来处理 css 中图片的使用。以及两者同时使用的情况.
+
 ## Todo
 
 + js: 分包，压缩，混淆
 + css: 拆分，压缩
 + 图片: 小图标 base64
++ webpack.config.js 拆分
+
+```js
+// config/webpack.dev.js
+// config/webpack.prod.js
+```
+
+```cmd
+"scripts": {
+  "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot --progress --config ./config/webpack.dev.js",
+  "build": "cross-env NODE_ENV=production webpack --progress --config ./config/webpack.prod.js"
+},
+```
 
 ## 参考文档
 
 + [ruanyf/webpack-demos](https://github.com/ruanyf/webpack-demos): 有很多案例可以查看
++ [webpack4系列教程（七）：使用 babel-loader](https://www.jianshu.com/p/d971bffff546): 介绍 webpack 如何使用 `babel-loader`。懒加载 `.babelrc` 设置
 + [less-loader-docs](https://www.webpackjs.com/loaders/less-loader/): webpack官方 less-loader 使用文档
 + [sass-loader-docs](https://www.webpackjs.com/loaders/sass-loader/):  webpack官方 sass-loader 使用文档
 + [stylus-loader-docs](https://webpack.js.org/loaders/stylus-loader/): webpack官方 stylus-loader 使用文档
 + [url-loader-docs](https://webpack.js.org/loaders/url-loader/): webpack官方 url-loader 使用文档
++ [webpack url-loader limit 转换部分资源为base64格式 其余不转换](https://segmentfault.com/a/1190000017745449)
++ [webpack4环境配置之process.env](https://www.jianshu.com/p/19d199f93045): webpack4 process.env 配置.
++ [extract-text-webpack-plugin](https://www.webpackjs.com/plugins/extract-text-webpack-plugin/): css 拆分, 已废弃推荐使用 mini-css-extract-plugin
++ [extract-loader](https://www.webpackjs.com/loaders/extract-loader/): css 拆分
++ [mini-css-extract-plugin](https://www.npmjs.com/package/mini-css-extract-plugin): css 拆分
++ [mini-css-extract-plugin简介](https://www.cnblogs.com/blackgan/p/10590540.html): mini-css-extract-plugin 使用介绍
++ [webpack学习（五）：webpack4+压缩和提取CSS以及提取公共部分](https://blog.csdn.net/weixin_40184174/article/details/85125388): 公共 css 拆分。webpack.config.js 拆分
++ [webpack4.x中关于css-loader的几个坑](https://blog.csdn.net/lqlqlq007/article/details/84031800): debug, css-loader 中图片路径转换
++ [debug: url-loader处理css中的图片资源遇到的问题](https://www.jianshu.com/p/3429cd456982): debug, css-loader 中图片路径转换
