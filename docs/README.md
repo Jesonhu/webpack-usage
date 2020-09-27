@@ -714,6 +714,143 @@ build 后 `./dist/assets/css` 中将生成两个css文件 `main.css` 和 `公共
 
 前面处理了 js 中 图片的使用。下面来处理 css 中图片的使用。以及两者同时使用的情况.
 
+## demo-13: 复制 html 
+
+build 后往往需要将模板 `index.html` 拷贝到发布目录，并且引入当前生成的资源路径。这时就可以通过
+`html-webpack-plugin` 实现。安装:
+
+```cmd
+npm i html-webpack-plugin -D
+```
+
+webpack.config.js
+```js
+const path = require('path')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const pkgConfig = require('./package.json')
+
+const isDevMode = process.env.NODE_ENV !== 'production'
+
+// 绝对路径
+// const outFilePublicPath = !isDevMode ? '/assets/imgs/' : ''
+
+// 相对路径
+const outFilePublicPath = !isDevMode ? '/assets/img/' : ''
+
+// 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
+const cssUseConfig = () => {
+  if (isDevMode) {
+    return {
+      loader: 'style-loader'
+    }
+  } else {
+    return {
+      loader: MiniCssExtractPlugin.loader,
+      options: {
+        publicPath: '../imgs/',
+        outputPath: 'assets/css/'
+      }
+    }
+  }
+}
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: pkgConfig.name,
+      template: './index.html', // 模板文件位置
+      filename: 'index.html',   // 打包后生成的文件
+      hash: true,               // 添加 hash 值解决缓存问题
+      minify: {
+        removeAttributeQuotes: true,  // 删除属性双引号
+        collapseWhitespace: true      // 折叠空行变成一行
+      }
+    }),
+    new HtmlWebpackPlugin({     // 生成 debug.html
+      title: `Debug Page - ` + pkgConfig.name,
+      template: './index.html', // 模板文件位置
+      filename: 'debug.html',   // 打包后生成的文件
+      hash: false,              // 添加 hash 值解决缓存问题
+      minify: {
+        removeAttributeQuotes: false,  // 删除属性双引号
+        collapseWhitespace: false      // 折叠空行变成一行
+      }
+    }),
+    new MiniCssExtractPlugin({
+      filename: isDevMode ? 'assets/css/[name].css' : 'assets/css/[name].[hash:7].css',
+      chunkFilename: isDevMode ? 'assets/css/[id].css' : 'assets/css/[id].[hash:7].css',
+    })
+  ],
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        commons: {
+          name: 'common',    //提取出来的文件命名
+          chunks: 'initial',  //initial表示提取入口文件的公共部分
+          minChunks: 2,       //表示提取公共部分最少的文件数
+          minSize: 0          //表示提取公共部分最小的大小
+        }
+      }
+    },
+  },
+  module: {
+    rules:[
+      {
+        test: /\.css$/,
+        use: [
+          cssUseConfig(),
+          { loader: 'css-loader' }
+        ]
+      },
+      {
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192,
+              name: '[name].[hash:7].[ext]',
+              publicPath: outFilePublicPath,
+              outputPath: 'assets/img/',
+            }
+          },
+        ],
+      }
+    ]
+  }
+}
+```
+
+
+## demo-14: 打包目录删除.
+
+多次编译时，默认之前的文件是不会重新删除的。有时需要删除之前打包后的资源。这是就需要这个loader。依赖安装:
+
+```cmd
+npm install clean-webpack-plugin -D
+```
+
+webpack.config.js
+```js
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+
+module.exports = {
+  plugins: [
+    new CleanWebpackPlugin()
+  ]
+}
+```
+
+
+
 ## Todo
 
 + js: 分包，压缩，混淆
@@ -753,3 +890,5 @@ build 后 `./dist/assets/css` 中将生成两个css文件 `main.css` 和 `公共
 + [webpack学习（五）：webpack4+压缩和提取CSS以及提取公共部分](https://blog.csdn.net/weixin_40184174/article/details/85125388): 公共 css 拆分。webpack.config.js 拆分
 + [webpack4.x中关于css-loader的几个坑](https://blog.csdn.net/lqlqlq007/article/details/84031800): debug, css-loader 中图片路径转换
 + [debug: url-loader处理css中的图片资源遇到的问题](https://www.jianshu.com/p/3429cd456982): debug, css-loader 中图片路径转换
++ [html-webpack-plugin](https://www.npmjs.com/package/html-webpack-plugin): 模板拷贝和自定义内容 loader
++ [clean-webpack-plugin](https://www.npmjs.com/package/clean-webpack-plugin): 删除打包的目录
