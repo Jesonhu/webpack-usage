@@ -7,7 +7,7 @@ const isDevMode = process.env.NODE_ENV !== 'production'
 // const outFilePublicPath = !isDevMode ? '/assets/imgs/' : ''
 
 // 相对路径
-const outFilePublicPath = !isDevMode ? '../img/' : ''
+const outFilePublicPath = !isDevMode ? '/assets/img/' : ''
 
 // 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
 const cssUseConfig = () => {
@@ -19,7 +19,7 @@ const cssUseConfig = () => {
     return {
       loader: MiniCssExtractPlugin.loader,
       options: {
-        publicPath: '',
+        publicPath: '../imgs/',
         outputPath: 'assets/css/'
       }
     }
@@ -75,9 +75,27 @@ module.exports = {
               limit: 8192,
               name: '[name].[hash:7].[ext]',
               publicPath: outFilePublicPath,
-              outputPath: 'assets/img/'
+              outputPath: 'assets/img/',
+              // The `mimetype` and `encoding` arguments will be obtained from your options
+              // The `resourcePath` argument is path to file.
+              generator: (content, mimetype, encoding, resourcePath) => {
+                console.log('===== generator =====', mimetype, resourcePath)
+                if (/\.html$/i.test(resourcePath)) {
+                  return `data:${mimetype},${content.toString()}`;
+                }
+
+                return `data:${mimetype}${
+                  encoding ? `;${encoding}` : ''
+                },${content.toString(encoding)}`;
+              }
             }
           },
+          {
+            loader: 'file-loader',
+            options: {
+              
+            }
+          }
         ],
       }
     ]

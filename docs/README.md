@@ -192,8 +192,8 @@ import 'babel-polyfill'
 
 一般需要安装两个loader:
 
-+ style-loader: 将 JS 字符串生成为 style 节点
-+ css-loader: 将 CSS 转化成 CommonJS 模块.
+  + style-loader: 将 JS 字符串生成为 style 节点
+  + css-loader: 将 CSS 转化成 CommonJS 模块.
 
 ```cmd
 npm i css-loader style-loader -D
@@ -402,7 +402,7 @@ module.exports = {
 }
 ```
 
-entry
+entry js
 
 ```js
 import img1File from './assets/imgs/small.png';
@@ -415,6 +415,12 @@ oImg2.src = img2File
 document.body.appendChild(oImg1)
 document.body.appendChild(oImg2)
 ```
+
+```js
+const oImg1 = document.createElement('img')
+oImg1.src = './assets/imgs/small.png'
+```
+这种方式图片没有作为模块使用。webpack 将会把路径当做纯字符串，不会做转换处理。
 
 图片会被转换为 `base64` 格式方式在页面中使用.
 
