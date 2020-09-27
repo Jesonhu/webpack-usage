@@ -580,15 +580,13 @@ module.exports = {
 `index.html` 放在根目录。`build` 后图片资源也正常了。这里有一个 `process.env` 的坑，通过 `cross-env` 解决的。
 
 
-
-
 ## demo-11: 拆分 css
 
 当前 css 也是放在 js 文件中。有时需要单独拆分到 css 文件。目前可以通过 [extract-loader](https://www.webpackjs.com/loaders/extract-loader/) 或 ~~[extract-text-webpack-plugin](https://www.webpackjs.com/plugins/extract-text-webpack-plugin/)~~ [mini-css-extract-plugin](https://www.npmjs.com/package/mini-css-extract-plugin) 实现。本示例使用 `mini-css-extract-plugin`。目前只有在webpack V4版本才支持使用该插件
 
 这个插件应该只在生产环境构建中使用，并且在loader链中不应该有style-loader，特别是我们在开发模式中使用HMR时。 所以开发环境 `style-loader` 生产环境: `mini-css-extract-plugin`
 
-**mini-css-extract-plugin 基本使用**
+1.1 mini-css-extract-plugin
 
 webpack.config.js
 ```js
@@ -714,6 +712,130 @@ build 后 `./dist/assets/css` 中将生成两个css文件 `main.css` 和 `公共
 
 前面处理了 js 中 图片的使用。下面来处理 css 中图片的使用。以及两者同时使用的情况.
 
+**1. 使用绝对路径**
+
++ 优势: 地址处理较简单
++ 劣势: 必须放在站点根目录访问.即 `//test.com/assets/img/*.jpg`
+
+CSS: 打包前
+
+```css
+.small_img_wrap {
+  background-image: url('../imgs/small_clock.png');
+}
+
+.big_img_wrap {
+  background-image: url('../imgs/big_dragon.jpg');
+}
+```
+
+js: 打包前
+```js
+import img1File from './assets/imgs/small.png';
+import img2File from './assets/imgs/big.jpg';
+
+const oImg1 = document.createElement('img')
+oImg1.src = img1File
+const oImg2 = document.createElement('img')
+oImg2.src = img2File
+document.body.appendChild(oImg1)
+document.body.appendChild(oImg2)
+```
+
+webpack.config.js 配置
+
+```js
+const path = require('path')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
+const isDevMode = process.env.NODE_ENV !== 'production'
+
+// 绝对路径
+const outFilePublicPath = !isDevMode ? '/assets/imgs/' : ''
+
+// 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
+const cssUseConfig = () => {
+  if (isDevMode) {
+    return {
+      loader: 'style-loader'
+    }
+  } else {
+    return {
+      loader: MiniCssExtractPlugin.loader,
+      options: {
+        publicPath: '../imgs/',
+        outputPath: 'assets/css/'
+      }
+    }
+  }
+}
+
+module.exports = {
+  entry: {
+    main: './src/index.js',
+  },
+  output: {
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'public'),
+    hot: true,
+    host: '192.168.1.15',
+  },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: isDevMode ? 'assets/css/[name].css' : 'assets/css/[name].[hash:7].css',
+      chunkFilename: isDevMode ? 'assets/css/[id].css' : 'assets/css/[id].[hash:7].css',
+    })
+  ],
+  module: {
+    rules:[
+      {
+        test: /\.css$/,
+        use: [
+          cssUseConfig(),
+          { loader: 'css-loader' }
+        ]
+      },
+      {
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 8192,
+              name: '[name].[hash:7].[ext]',
+              publicPath: outFilePublicPath,
+              outputPath: 'assets/img/',
+            }
+          },
+        ],
+      }
+    ]
+  }
+}
+```
+图片的loader中的 `publicPath` 配置成了绝对路径 `/assets/imgs/`
+
+CSS：打包后
+
+```css
+.big_img_wrap {
+  background-image: url(/assets/img/big_dragon.5d0125e.jpg);
+}
+```
+
+JS 方式创建的元素图片地址: 打包后
+```html
+<img src="/assets/img/big.c0bddc6.jpg">
+```
+
+**2. 使用相对路径**
+
++ 优势: 只要将资源放置在 index.html 所在的文件夹目录下就行。例如 `//test.com/sites/aaa/index.html` `//test.com/sites/aaa/assets/img/*.jpg`
++ 劣势: 这时候就需要将 Html 中的图片路径与 CSS 中的图片路径进行不同的处理。
+
 ## demo-13: 复制 html 
 
 build 后往往需要将模板 `index.html` 拷贝到发布目录，并且引入当前生成的资源路径。这时就可以通过
@@ -733,10 +855,7 @@ const pkgConfig = require('./package.json')
 const isDevMode = process.env.NODE_ENV !== 'production'
 
 // 绝对路径
-// const outFilePublicPath = !isDevMode ? '/assets/imgs/' : ''
-
-// 相对路径
-const outFilePublicPath = !isDevMode ? '/assets/img/' : ''
+const outFilePublicPath = !isDevMode ? '/assets/imgs/' : ''
 
 // 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
 const cssUseConfig = () => {
@@ -830,9 +949,9 @@ module.exports = {
 ```
 
 
-## demo-14: 打包目录删除.
+## demo-14: 删除之前的打包目录.
 
-多次编译时，默认之前的文件是不会重新删除的。有时需要删除之前打包后的资源。这是就需要这个loader。依赖安装:
+多次打包时，默认之前的文件是不会删除的。名字相同则覆盖，不同则保留。如果需要删除之前打包后资源。这时就需要 `clean-webpack-plugin` 。依赖安装:
 
 ```cmd
 npm install clean-webpack-plugin -D
@@ -846,6 +965,208 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin()
   ]
+}
+```
+
+## demo-15: 全局变量.
+
+什么叫全局变量? 浏览器环境中暴露在 window 对象下的变量。
+比较典型的 `jQuery` 的使用。需要对外暴露一个全局变量 `$`, 即可以通过 `window.$` 或 `windwo.jQuery` 访问。
+
+下面先说下模块方式的使用:
+
+```js
+// *.js
+import $ from 'jquery'
+console.log($)
+```
+
+这种方式是通过模块方式使用 `jquery`, 此方式可以直接使用。但是 `window.$` 或 `window.jquery` 方式却无法使用。目前我们需要全局方式使用。
+
+loader 目前分4种方式使用:
+
++ 1. pre: 在前面执行的 loader
++ 2. normal: 普通的 loader
++ 3. 内联: 内联的 loader, 基本语法 `expose?{暴露符号}!{模块名}`。例如 `import $ from 'expose-loader?exposes[]=$!jquery`。
+是暴露一个符号 `$`(window.$) 并作为 `jquery` 使用
++ 4. 后置: 后置的 loader
+
+
+**方式1: 使用 [expose-loader](https://www.webpackjs.com/loaders/expose-loader/) 处理**
+
+安装
+```cmd
+npm i expose-loader
+```
+需要注意的是，当前插件需要在生产环境使用，所以安装时不使用 `--save-dev` 或 `-D`, 详细使用可以点击[这里](https://www.npmjs.com/package/expose-loader)
+
+**1.1 expose-loader 内联方式**
+
+入口 js
+```js
+// 引入
+import jquery from 'expose-loader?exposes[]=$&exposes[]=jQuery!jquery';
+
+// 使用
+console.log('===== window.$', window.$)
+console.log('===== window.jQuery', window.jQuery)
+```
+以上方式不需要配置 `webpack`。通过 `exposes[]=$&exposes[]=jQuery` 方式暴露 `window.$` `window.jQuery`
+
+**1.2 使用配置方式**
+
+webpack.config.js
+```js
+module: {
+  rules:[
+    // @see https://www.npmjs.com/package/expose-loader#using-configuration
+    {
+      test: require.resolve('jquery'),
+      loader: 'expose-loader',
+      options: {
+        exposes: ['$', 'jQuery'],
+      },
+    }
+  ]
+}
+```
+
+使用
+```js
+import jquery from 'jquery';
+
+// ========================================
+// 全局 jquery
+// ========================================
+console.log('===== window.$', window.$)
+console.log('===== window.jQuery', window.jQuery)
+```
+通过配置 webpack 可以在生产环境中使用 `window.$` 或 `window.jQuery`
+
+## demo-16: 抽取公共 js 与 vendor js
+
++ 公共js: 基于项目开发，需要多个地方都使用的js
++ vendor js: 第三方类库js。例如 jquery、lodash。通常来自于 `node_modules`
+
+!!!注意: 需要多页文件，且每个入口中的文件都引入这个模块时才会将代码进行拆分
+
+webpack.config.js
+```js
+module.exports = {
+  entry: {
+    main: './src/index.js',
+    main2: './src/index2.js'
+  },
+  output: {
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  optimization: {
+    splitChunks: {                // 分割代码块 
+      cacheGroups: {              // 缓存组
+        commons: {                // 公共的模块
+          name: 'common',         // 提取出来的文件命名
+          chunks: 'initial',      // initial表示提取入口文件的公共部分
+          minChunks: 2,           // 表示提取公共部分最少的文件数
+          minSize: 0              // 表示提取公共部分最小的大小
+        },
+        vendor: {                 // 第三方资源
+          test: /node_modules/,   // 从 node_modules 中来的资源就作为vendor资源.
+          chunks: 'initial',      // initial表示提取入口文件的公共部分
+          minChunks: 2,           // 表示提取公共部分最少的文件数
+          minSize: 0  
+        },
+      }
+    },
+  }
+}
+```
+
+入口1:
+```js
+// index.js
+import module1 from './module1'
+import module2 from './module2'
+import module3 from './module3'
+import jquery from 'jquery'
+import './common'
+
+// ========================================
+// 全局 jquery
+// ========================================
+console.log('===== module jquery', jquery)
+console.log('===== window.$', window.$)
+console.log('===== window.jQuery', window.jQuery)
+```
+
+入口2:
+```js
+// index2.js
+import './common'
+import './module2_2'
+console.log('Hello from index2.js')
+
+// module2_2.js
+import jquery from 'jquery'
+
+console.log('hello jquery from module1', jquery)
+```
+
+公共部分
+
+```js
+// common.js
+console.log('这是项目公共部分内容')
+```
+
+打包后将生成 `/dist/common.js` 里面的内容为 `common.js` 与 `jquery.js` 的代码。再来看看
+webpack.config.js 相关部分的配置
+
+```js
+optimization: {
+  splitChunks: {                // 分割代码块 
+    cacheGroups: {              // 缓存组
+      commons: {                // 公共的模块
+        name: 'common',         // 提取出来的文件命名
+        chunks: 'initial',      // initial表示提取入口文件的公共部分
+        minChunks: 2,           // 表示提取公共部分最少的文件数
+        minSize: 0              // 表示提取公共部分最小的大小
+      },
+      vendor: {                 // 第三方资源
+        test: /node_modules/,   // 从 node_modules 中来的资源就作为vendor资源.
+        chunks: 'initial',      // initial表示提取入口文件的公共部分
+        minChunks: 2,           // 表示提取公共部分最少的文件数
+        minSize: 0  
+      },
+    }
+  },
+}
+```
+这样配置 `cacheGroups.vendor` 的配置将会失效。因为 `cacheGroups.commons` 先执行，于是先抽离代码，下面的就
+失效了。这就是打包后的 `/dist/common.js` 出现 `common.js` 与 `jquery.js` 代码的原因。有时需要的是
+`jquery.js` 的内容放置到 `vendor` 中与 `/src/common.js` 中的代码分离。此时可以通过添加优先级 `priority` 
+处理。下面是添加优先级后的配置:
+
+```js
+optimization: {
+  splitChunks: {                // 分割代码块 
+    cacheGroups: {              // 缓存组
+      commons: {                // 公共的模块
+        name: 'common',         // 提取出来的文件命名
+        chunks: 'initial',      // initial表示提取入口文件的公共部分
+        minChunks: 2,           // 表示提取公共部分最少的文件数
+        minSize: 0              // 表示提取公共部分最小的大小
+      },
+      vendor: {                 // 第三方资源
+        test: /node_modules/,   // 从 node_modules 中来的资源就作为vendor资源.
+        name: 'vendor',         // 提取出来的文件名
+        priority: 1,            // 添加优先级，在 cacheGroups.common 之前执行
+        chunks: 'initial',      // initial表示提取入口文件的公共部分
+        minChunks: 2,           // 表示提取公共部分最少的文件数
+        minSize: 0  
+      },
+    }
+  },
 }
 ```
 
@@ -892,3 +1213,4 @@ module.exports = {
 + [debug: url-loader处理css中的图片资源遇到的问题](https://www.jianshu.com/p/3429cd456982): debug, css-loader 中图片路径转换
 + [html-webpack-plugin](https://www.npmjs.com/package/html-webpack-plugin): 模板拷贝和自定义内容 loader
 + [clean-webpack-plugin](https://www.npmjs.com/package/clean-webpack-plugin): 删除打包的目录
++ [expose-loader](https://www.webpackjs.com/loaders/expose-loader/): 官方文档 expose-loader 基本使用

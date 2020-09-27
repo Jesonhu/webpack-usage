@@ -1,0 +1,20 @@
+h2 {
+  color: red;
+  font-size: 20px;
+}
+
+.small_img_wrap {
+  width: 30px;
+  height: 30px;
+  background-repeat: no-repeat;
+  background-image: url('../imgs/small_clock.png');
+  background-size: 100% 100%;
+}
+
+.big_img_wrap {
+  width: 500px;
+  height: 500px;
+  background-repeat: no-repeat;
+  background-image: url('../imgs/big_dragon.jpg');
+  background-size: 100% 100%;
+}
