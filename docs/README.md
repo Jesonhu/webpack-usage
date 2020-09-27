@@ -1174,13 +1174,13 @@ optimization: {
 
 ## Todo
 
-+ js: 分包，压缩，混淆
-+ css: 拆分，压缩
-+ 图片: 小图标 base64
++ js: ~~分包~~，压缩，混淆
++ css: ~~拆分~~，压缩, 浏览器兼容
++ 图片的使用方式有以下三种:
   + HTML 中使用图片
   + JS 中使用图片
   + CSS 中使用图片
-+ webpack.config.js 拆分
++ webpack.config.js 拆分到 `/config/webpack.dev.js` `/config/webpack.prod.js`
 
 ```js
 // config/webpack.dev.js
