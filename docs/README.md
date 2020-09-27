@@ -129,7 +129,7 @@ module.exports = {
 <script type="text/javascript" src="./vendor.bundle.js"></script>
 ```
 
-## Demo-05: Babel-loader 使用
+## demo-05: Babel-loader 使用
 
 Babel-loader 基本使用可以查看[文档](github.com/babel/babel-loader)。例如有如下配置
 
@@ -708,11 +708,50 @@ import './assets/css/common.css'
 
 build 后 `./dist/assets/css` 中将生成两个css文件 `main.css` 和 `公共样式文件`
 
-## demo-12: url-loader && css
+## demo-12: 图片处理
 
 前面处理了 js 中 图片的使用。下面来处理 css 中图片的使用。以及两者同时使用的情况.
 
-**1. 使用绝对路径**
++ 图片的使用方式有以下三种:
+  + HTML 中使用图片
+  + JS 中使用图片
+  + CSS 中使用图片
+
+```js
+const oImg1 = document.createElement('img')
+oImg1.src = './assets/imgs/small.png'
+```
+这种方式图片没有作为模块使用。webpack 将会把路径当做纯字符串，不会做转换处理。
+
++ `url-loader`: 默认配置时会将所有的图片(html中，css中)全部转换为 `base64` 字符串, 当配置了 `limit` 超过限制
+的图片将会交给 `file-loader` 处理。因此需要安装 `css-loader、file-loader`
++ `file-loader`: 将使用的图片拷贝至输出目录。
++ html-withImg-loader: 处理 HTML 中的图片路径。
+
+**1. html-withimg-loader 使用**
+
+安装
+```cmd
+npm install html-withimg-loader --save
+```
+
+使用
+```
+var html = require('html-withimg-loader!../xxx.html');
+```
+或者写到配置中：
+```js
+loaders: [
+    {
+        test: /\.(htm|html)$/i,
+        loader: 'html-withimg-loader'
+    }
+]
+```
+!!! 测试发现html中的图片可以正常处理，但是 `<%= htmlWebpackPlugin.options.title %>` 失效了。在开发中也要避免html直接使用
+图片方式。可以通过 JS 中创建图片，然后插入 dom 中规避掉这种方式.
+
+**2. 使用绝对路径**
 
 + 优势: 地址处理较简单
 + 劣势: 必须放在站点根目录访问.即 `//test.com/assets/img/*.jpg`
@@ -831,7 +870,7 @@ JS 方式创建的元素图片地址: 打包后
 <img src="/assets/img/big.c0bddc6.jpg">
 ```
 
-**2. 使用相对路径**
+**3. 使用相对路径**
 
 + 优势: 只要将资源放置在 index.html 所在的文件夹目录下就行。例如 `//test.com/sites/aaa/index.html` `//test.com/sites/aaa/assets/img/*.jpg`
 + 劣势: 这时候就需要将 Html 中的图片路径与 CSS 中的图片路径进行不同的处理。
@@ -968,7 +1007,7 @@ module.exports = {
 }
 ```
 
-## demo-15: 全局变量.
+## demo-15: 导出全局变量.
 
 什么叫全局变量? 浏览器环境中暴露在 window 对象下的变量。
 比较典型的 `jQuery` 的使用。需要对外暴露一个全局变量 `$`, 即可以通过 `window.$` 或 `windwo.jQuery` 访问。
@@ -1022,10 +1061,14 @@ module: {
     // @see https://www.npmjs.com/package/expose-loader#using-configuration
     {
       test: require.resolve('jquery'),
-      loader: 'expose-loader',
-      options: {
-        exposes: ['$', 'jQuery'],
-      },
+      use: [
+        {
+          loader: 'expose-loader',
+          options: {
+            exposes: ['$', 'jQuery'],
+          },
+        }
+      ]
     }
   ]
 }
@@ -1042,6 +1085,79 @@ console.log('===== window.$', window.$)
 console.log('===== window.jQuery', window.jQuery)
 ```
 通过配置 webpack 可以在生产环境中使用 `window.$` 或 `window.jQuery`
+
+**1.3 模块中注入 jQuery**
+
+```js
+console.log($)
+```
+即每个模块中在未引入的情况下，直接使用 `$`, 这时可以通过webpack在每个插件中注入 `$` 实现。
+对应的配置如下:
+
+webpack.config.js 
+```js
+const webpack = require('webpack')
+
+plugins: [
+  new webpack.ProvidePlugin({        // 在每个模块中注入$
+    $: 'jquery'
+  })
+]
+```
+
+使用
+```js
+// 只能在模块中使用 $, window.$ 是无效的
+console.log('===== module jquery', $)
+```
+
+**1.4.1 CDN方式引入jQuery**
+
+index.html
+```html
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+```
+
+使用
+```js
+console.log($)
+console.log(jQuery)
+console.log('===== window.$', window.$)
+console.log('===== window.jQuery', window.jQuery)
+```
+这种方式也是可以的, 但需要注意的是，使用这种方式时模块可以不再重复引入 `jQuery` 或者注入 `jQuery`.
+
+**1.4.2 CDN 方式优化**
+
+使用CDN 引入 jQuery，打包时忽略 jQuery 模块
+
+使用
+```js
+import jQuery from 'jquery'
+
+console.log($)
+console.log(jQuery)
+console.log('===== window.$', window.$)
+console.log('===== window.jQuery', window.jQuery)
+```
+在build后的资源会发现，`jQuery` 的资源被打包了进去。但是此时是通过 CDN 方式使用的。打包时可以忽略掉 `jQuery` 的内容。
+此时可以通过如下配置实现:
+
+webpack.config.js
+```js
+module.exports = {
+  externals: {
+    jquery: 'jQuery'    // 打包时忽略 jQuery
+  }
+}
+```
+再重新打包后发现打包后的JS文件已经少了 `jQuery` 的内容
+
+**所以截止目前可以做一个总结，有三种方式引入第三方模块**:
+
++ expose-loader: 暴露全局变量
++ webpack.ProvidePlugin: 每个模块注入方式
++ script 标签: CDN 方式
 
 ## demo-16: 抽取公共 js 与 vendor js
 
@@ -1214,3 +1330,5 @@ optimization: {
 + [html-webpack-plugin](https://www.npmjs.com/package/html-webpack-plugin): 模板拷贝和自定义内容 loader
 + [clean-webpack-plugin](https://www.npmjs.com/package/clean-webpack-plugin): 删除打包的目录
 + [expose-loader](https://www.webpackjs.com/loaders/expose-loader/): 官方文档 expose-loader 基本使用
++ [externals](https://webpack.docschina.org/configuration/externals/): 让webpack 忽略某些模块包
++ [html-withimg-loader](https://github.com/wzsxyz/html-withimg-loader): 打包 html 中的图片，另外还可以学习 webpack-loader 的写法.
