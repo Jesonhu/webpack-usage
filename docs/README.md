@@ -754,7 +754,7 @@ loaders: [
 **2. 使用绝对路径**
 
 + 优势: 地址处理较简单
-+ 劣势: 必须放在站点根目录访问.即 `//test.com/assets/img/*.jpg`
++ 劣势: ~~必须放在站点根目录访问.即 `//test.com/assets/img/*.jpg`~~
 
 CSS: 打包前
 
@@ -790,7 +790,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const isDevMode = process.env.NODE_ENV !== 'production'
 
 // 绝对路径
-const outFilePublicPath = !isDevMode ? '/assets/imgs/' : ''
+const outFilePublicPath = !isDevMode ? 'http://127.0.0.1:8080/dist/assets/img/' : ''
 
 // 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
 const cssUseConfig = () => {
@@ -855,24 +855,27 @@ module.exports = {
   }
 }
 ```
-图片的loader中的 `publicPath` 配置成了绝对路径 `/assets/imgs/`
+图片的loader中的 `publicPath` 配置成了绝对路径 `http://127.0.0.1:8080/dist/assets/img/`
 
 CSS：打包后
 
 ```css
 .big_img_wrap {
-  background-image: url(/assets/img/big_dragon.5d0125e.jpg);
+  background-image: url(http://127.0.0.1:8080/dist/assets/img/big_dragon.5d0125e.jpg);
 }
 ```
 
 JS 方式创建的元素图片地址: 打包后
 ```html
-<img src="/assets/img/big.c0bddc6.jpg">
+<img src="http://127.0.0.1:8080/dist/assets/img/big.c0bddc6.jpg">
 ```
+
+这种方式通常是这样的场景需求: 图片通过CDN等方式引入.
 
 **3. 使用相对路径**
 
-+ 优势: 只要将资源放置在 index.html 所在的文件夹目录下就行。例如 `//test.com/sites/aaa/index.html` `//test.com/sites/aaa/assets/img/*.jpg`
++ 优势: 只要将资源放置在 index.html 所在的文件夹目录下就行。例如 `//test.com/sites/aaa/index.html` `//test.com/sites/aaa/assets/img/*.jpg`, 
+PS: 截止目前绝对路径也不一定需要放在根目录。
 + 劣势: 这时候就需要将 Html 中的图片路径与 CSS 中的图片路径进行不同的处理。
 
 ## demo-13: 复制 html 

@@ -8,10 +8,10 @@ const webpack = require('webpack')
 const isDevMode = process.env.NODE_ENV !== 'production'
 
 // 绝对路径
-// const outFilePublicPath = !isDevMode ? '/assets/imgs/' : ''
+const outFilePublicPath = !isDevMode ? 'http://127.0.0.1:8080/dist/assets/img/' : ''
 
 // 相对路径
-const outFilePublicPath = !isDevMode ? '/assets/img/' : ''
+// const outFilePublicPath = !isDevMode ? '/' : ''
 
 // 开发环境 style-loader 与生产环境 MiniCssExtractPlugin 配置
 const cssUseConfig = () => {
@@ -36,7 +36,8 @@ module.exports = {
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, 'dist')
+    path: path.resolve(__dirname, 'dist'),
+    // publicPath: isDevMode ? '' : 'http://127.0.0.1:8080/dist/'
   },
   devServer: {
     contentBase: path.resolve(__dirname, 'public'),

@@ -20,6 +20,6 @@ h2 {
   width: 500px;
   height: 500px;
   background-repeat: no-repeat;
-  background-image: url(/assets/img/big_dragon.5d0125e.jpg);
+  background-image: url(http://127.0.0.1:8080/dist/assets/img/big_dragon.5d0125e.jpg);
   background-size: 100% 100%;
 }
