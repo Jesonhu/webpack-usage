@@ -870,7 +870,17 @@ JS 方式创建的元素图片地址: 打包后
 <img src="http://127.0.0.1:8080/dist/assets/img/big.c0bddc6.jpg">
 ```
 
-这种方式通常是这样的场景需求: 图片通过CDN等方式引入.
+当图片需要通过CDN等方式引入时比较适合这种方式。也解决了资源必须放在根目录的问题。下面来看看对所有的资源都添加绝对路径:
+
+webpack.config.js
+```js
+output: {
+  filename: '[name].js',
+  path: path.resolve(__dirname, 'dist'),
+  publicPath: isDevMode ? '' : 'http://127.0.0.1:8080/dist/'
+}
+```
+这种方式一般是所有资源都通过 CDN 方式引入时需要.
 
 **3. 使用相对路径**
 
