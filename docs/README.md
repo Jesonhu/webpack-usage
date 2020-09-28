@@ -1214,3 +1214,4 @@ optimization: {
 + [html-webpack-plugin](https://www.npmjs.com/package/html-webpack-plugin): 模板拷贝和自定义内容 loader
 + [clean-webpack-plugin](https://www.npmjs.com/package/clean-webpack-plugin): 删除打包的目录
 + [expose-loader](https://www.webpackjs.com/loaders/expose-loader/): 官方文档 expose-loader 基本使用
++ [copy-webpack-plugin](https://www.npmjs.com/package/copy-webpack-plugin): 复制资源到指定目录插件。[双面人](https://gitee.com/weblife/demo-shuangmianren)案例使用了此插件
