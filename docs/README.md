@@ -1343,5 +1343,9 @@ optimization: {
 + [html-webpack-plugin](https://www.npmjs.com/package/html-webpack-plugin): 模板拷贝和自定义内容 loader
 + [clean-webpack-plugin](https://www.npmjs.com/package/clean-webpack-plugin): 删除打包的目录
 + [expose-loader](https://www.webpackjs.com/loaders/expose-loader/): 官方文档 expose-loader 基本使用
+<<<<<<< HEAD
 + [externals](https://webpack.docschina.org/configuration/externals/): 让webpack 忽略某些模块包
 + [html-withimg-loader](https://github.com/wzsxyz/html-withimg-loader): 打包 html 中的图片，另外还可以学习 webpack-loader 的写法.
+=======
++ [copy-webpack-plugin](https://www.npmjs.com/package/copy-webpack-plugin): 复制资源到指定目录插件。[双面人](https://gitee.com/weblife/demo-shuangmianren)案例使用了此插件
+>>>>>>> b1173d7aa88e2657ab5af9bc39ad36b4e5d37da8
